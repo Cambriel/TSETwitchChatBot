@@ -1,13 +1,11 @@
+import { createBotCommand } from '@twurple/easy-bot';
 
+const dice = createBotCommand(
+    'dice',
+    (params, {reply}) => {
+      const diceRoll = Math.floor(Math.random() * 6) + 1; 
+      reply(`You rolled a ${diceRoll}`);
+    }
+);
 
-const dice = () => {
-    const num = rollDice();
-        client.say(target, `You rolled a ${num}`);
-        console.log(`* Executed ${commandName} command`);
-}
-
-// Function called when the "dice" command is issued
-function rollDice () {
-    const sides = 6;
-    return Math.floor(Math.random() * sides) + 1;
-  }
+module.exports = dice;
