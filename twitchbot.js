@@ -1,50 +1,63 @@
-const tmi = require('tmi.js');
+import dotenv from 'dotenv';
+import { promise as fs } from 'fs';
+import { RefreshingAuthProvider } from '@twurple/auth';
+import { Bot, createBotCommand } from '@twurple/easy-bot';
 
-// Define configuration options
-const opts = {
-  identity: {
-    username: '<BOT_USERNAME>',
-    password: '<OAUTH_TOKEN>'
-  },
-  channels: [
-    '<CHANNEL_NAME>'
+dotenv.config();
+
+const RefreshingAuthProvider = RefreshingAuthProvider;
+const Bot = Bot;
+
+const clientId = process.env.CLIENT_ID;
+const clientSecret = process.env.CLIENT_SECRET;
+const channels = process.env.CHANNELS.split(",");
+
+const tokenData = JSON.parse(await fs.readFile('./tokens.json', 'utf-8'));
+
+const authProvider = new RefreshingAuthProvider(clientId, clientSecret);
+
+authProvider.onRefresh(async (userId, newTokenData) => await fs.writeFile(
+  './tokens.json',
+  JSON.stringify(newTokenData, null, 4),
+  'utf-8'
+));
+
+await authProvider.addUserForToken(
+  tokenData,
+  ['chat']
+);
+
+const bot = new Bot({ authProvider, 
+  channels: channels,
+  commands: [
+    createBotCommand(
+      'dice',
+      (params, {reply}) => {
+        const diceRoll = Math.floor(Math.random() * 6) + 1; 
+        reply(`You rolled a ${diceRoll}`);
+      }
+    ),
+    createBotCommand(
+      'slap',
+      (params, { userName, say}) => {
+        say(`${userName} slaps ${params.join(', ')} with a large trout. Damn!`);
+      }
+    )
   ]
-};
+});
 
-// Create a client with our options
-const client = new tmi.client(opts);
+bot.onSub(({ broadcasterName, username }) => {
+  bot.say(broadcasterName, `Thanks to @${userName} for subscribing to the channel!`);
+});
 
-// Register our event handlers (defined below)
-client.on('message', onMessageHandler);
-client.on('connected', onConnectedHandler);
+bot.onResub(({ broadcasterName, userName, months }) => {
+  bot.say(broadcasterName, `Thanks to @${userName} for subscribing to the channel for a total of ${months} months!`);
+});
 
-// Connect to Twitch:
-client.connect();
+bot.onSubGift(({broadcasterName, gifterName, userName })=>{
+  bot.say(broadcasterName, `Thanks to @${gifterName} for gifting a subscription to @${userName}!`);
+});
 
-// Called every time a message comes in
-function onMessageHandler (target, context, msg, self) {
-  if (self) { return; } // Ignore messages from the bot
 
-  // Remove whitespace from chat message
-  const commandName = msg.trim();
 
-  // If the command is known, let's execute it
-  if (commandName === '!dice') {
-    const num = rollDice();
-    client.say(target, `You rolled a ${num}`);
-    console.log(`* Executed ${commandName} command`);
-  } else {
-    console.log(`* Unknown command ${commandName}`);
-  }
-}
-
-// Function called when the "dice" command is issued
-function rollDice () {
-  const sides = 6;
-  return Math.floor(Math.random() * sides) + 1;
-}
-
-// Called every time the bot connects to Twitch chat
-function onConnectedHandler (addr, port) {
-  console.log(`* Connected to ${addr}:${port}`);
-}
+console.log("I am running");
