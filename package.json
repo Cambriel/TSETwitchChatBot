@@ -1,0 +1,11 @@
+{
+  "name": "tse-chat-bot",
+  "version": "1.0.0",
+  "description": "A simple chat bot, which is scalable by adding scripts to a folder structure",
+  "main": "twitchbot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "MIT"
+}
