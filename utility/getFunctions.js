@@ -17,3 +17,5 @@ const getFunctions = async (folderPath) => {
 
     return functionsList;
 };
+
+module.exports = getFunctions;
