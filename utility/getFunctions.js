@@ -7,7 +7,7 @@ import path from 'path';
  * @param {string} folderPath is the directory in which the .js files are located
  * @returns {Promise<BotCommand[]>} a list of all the exports from .js files within the given directory
  */
-const getFunctions = async (folderPath) => {
+export const getFunctions = async (folderPath) => {
     const files = fs.readdirSync(folderPath);
 
     const functionsList = [];
@@ -25,5 +25,3 @@ const getFunctions = async (folderPath) => {
 
     return functionsList;
 };
-
-module.exports = getFunctions;
