@@ -3,13 +3,14 @@ import fs from "fs";
 import { RefreshingAuthProvider } from "@twurple/auth";
 import { Bot } from "@twurple/easy-bot";
 import getCommands from "./utility/getChatCommands.js";
-import getEvents from "./utility/getEvents.js";
+import setEvents from "./utility/setEvents.js";
 
 dotenv.config();
 
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
 const channel = process.env.CHANNEL;
+
 const chatCommands = await getCommands();
 
 const tokenData = JSON.parse(fs.readFileSync(`./tokens/token.${process.env.CLIENT_ID}.json`, 'utf8'));
@@ -35,6 +36,6 @@ const bot = new Bot({
   commands: chatCommands
 });
 
-const events = await getEvents(bot);
+const events = await setEvents(bot);
 
 console.log("I am running");
