@@ -1,63 +1,40 @@
-import dotenv from 'dotenv';
-import { promise as fs } from 'fs';
-import { RefreshingAuthProvider } from '@twurple/auth';
-import { Bot, createBotCommand } from '@twurple/easy-bot';
+import dotenv from "dotenv";
+import fs from "fs";
+import { RefreshingAuthProvider } from "@twurple/auth";
+import { Bot } from "@twurple/easy-bot";
+import getCommands from "./utility/getChatCommands.js";
+import getEvents from "./utility/getEvents.js";
 
 dotenv.config();
 
-const RefreshingAuthProvider = RefreshingAuthProvider;
-const Bot = Bot;
-
 const clientId = process.env.CLIENT_ID;
 const clientSecret = process.env.CLIENT_SECRET;
-const channels = process.env.CHANNELS.split(",");
+const channel = process.env.CHANNEL;
+const chatCommands = await getCommands();
 
-const tokenData = JSON.parse(await fs.readFile('./tokens.json', 'utf-8'));
+const tokenData = JSON.parse(fs.readFileSync(`./tokens/token.${process.env.CLIENT_ID}.json`, 'utf8'));
 
 const authProvider = new RefreshingAuthProvider(clientId, clientSecret);
 
-authProvider.onRefresh(async (userId, newTokenData) => await fs.writeFile(
-  './tokens.json',
-  JSON.stringify(newTokenData, null, 4),
-  'utf-8'
-));
+authProvider.onRefresh(async (userId, newTokenData) => {
+  fs.writeFileSync(
+    `./tokens/token.${userId}.json`,
+    JSON.stringify(newTokenData, null, 4),
+    'utf-8'
+  )
+});
 
 await authProvider.addUserForToken(
   tokenData,
-  ['chat']
-);
+  ['subscriptions', 'channel_subscriptions']
+).catch(error => console.error(error));
 
-const bot = new Bot({ authProvider, 
-  channels: channels,
-  commands: [
-    createBotCommand(
-      'dice',
-      (params, {reply}) => {
-        const diceRoll = Math.floor(Math.random() * 6) + 1; 
-        reply(`You rolled a ${diceRoll}`);
-      }
-    ),
-    createBotCommand(
-      'slap',
-      (params, { userName, say}) => {
-        say(`${userName} slaps ${params.join(', ')} with a large trout. Damn!`);
-      }
-    )
-  ]
+const bot = new Bot({ 
+  authProvider, 
+  channels: [channel],
+  commands: chatCommands
 });
 
-bot.onSub(({ broadcasterName, username }) => {
-  bot.say(broadcasterName, `Thanks to @${userName} for subscribing to the channel!`);
-});
-
-bot.onResub(({ broadcasterName, userName, months }) => {
-  bot.say(broadcasterName, `Thanks to @${userName} for subscribing to the channel for a total of ${months} months!`);
-});
-
-bot.onSubGift(({broadcasterName, gifterName, userName })=>{
-  bot.say(broadcasterName, `Thanks to @${gifterName} for gifting a subscription to @${userName}!`);
-});
-
-
+const events = await getEvents(bot);
 
 console.log("I am running");
